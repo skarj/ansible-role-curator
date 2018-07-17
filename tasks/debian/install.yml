@@ -1,0 +1,57 @@
+---
+
+- name: get information about installed curator package
+  shell: dpkg -s elasticsearch-curator | grep "Version:"
+  changed_when: false
+  failed_when: false
+  register: dpkg_info
+  args:
+    warn: false
+  check_mode: false
+
+- name: get version of installed curator package
+  set_fact:
+    installed_package_version: "{{ dpkg_info.stdout.split(' ')[1] }}"
+  check_mode: false
+  when:
+    - dpkg_info is defined
+    - dpkg_info.stdout_lines | list | length > 0
+
+- name: show elasticsearch-curator version
+  debug:
+    msg: "{% if installed_package_version is defined %}Current: {{ installed_package_version }} {% endif %}Install: {{ curator.version }}"
+
+- name: get information about version locks
+  command: dpkg --get-selections elasticsearch-curator
+  changed_when: false
+  register: dpkg_hold
+  args:
+    warn: false
+  check_mode: false
+  when: curator.pin_version
+
+- name: remove version lock for elasticsearch-curator
+  dpkg_selections:
+    name: elasticsearch-curator
+    selection: install
+  when:
+    - curator.pin_version
+    - "'hold' in dpkg_hold.stdout"
+    - installed_package_version is defined
+    - installed_package_version is version(curator.version, '<>')
+  notify: curator hold version
+
+- name: install elasticsearch-curator
+  package:
+    name: "elasticsearch-curator={{ curator.version }}*"
+    update_cache: true
+  notify: curator hold version
+
+- name: pin curator version
+  debug:
+    msg: "Pin curator version"
+  changed_when: true
+  when:
+    - curator.pin_version
+    - "not 'hold' in dpkg_hold.stdout"
+  notify: curator hold version

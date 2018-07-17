@@ -1,0 +1,37 @@
+---
+
+- name: Converge
+  hosts: all
+  roles:
+    - role: ansible-role-curator
+      curator:
+        action_configs:
+          delete_indices:
+            actions:
+              1:
+                action: delete_indices
+                description: Delete filebeat indices older than 7 days
+                options:
+                  ignore_empty_list: true
+                  timeout_override:
+                  continue_if_exception: false
+                  disable_action: false
+                filters:
+                  - filtertype: pattern
+                    kind: prefix
+                    value: filebeat
+                    exclude:
+                  - filtertype: age
+                    source: creation_date
+                    direction: older
+                    timestring: '%Y.%m.%d'
+                    unit: days
+                    unit_count: 7
+                    exclude:
+
+        project_index_rotation:
+          - name: "project1"
+            keep_days:
+              prod: 10
+              preprod: 5
+          - name: "project2"

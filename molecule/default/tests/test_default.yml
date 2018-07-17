@@ -1,0 +1,9 @@
+---
+
+file:
+  /usr/bin/curator:
+    exists: true
+  /etc/curator/curator.yml:
+    exists: true
+  /etc/curator/actions/delete_indices.yml:
+    exists: true

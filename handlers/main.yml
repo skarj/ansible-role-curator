@@ -1,0 +1,13 @@
+---
+
+- name: curator hold version
+  dpkg_selections:
+    name: elasticsearch-curator
+    selection: hold
+  when: curator.pin_version
+
+- name: curator lock version
+  command: yum versionlock add elasticsearch-curator-{{ curator.version }}
+  args:
+    warn: false
+  when: curator.pin_version

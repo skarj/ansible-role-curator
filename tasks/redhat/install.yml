@@ -1,0 +1,53 @@
+---
+
+- name: get information about installed curator package
+  yum:
+    list: elasticsearch-curator
+  check_mode: false
+  register: yum_list
+
+- name: get version of installed curator package
+  set_fact:
+    installed_package_version: "{{ yum_list.results | selectattr('yumstate','equalto','installed') | map(attribute='version') | first }}"
+  check_mode: false
+  when: yum_list.results | selectattr('yumstate','equalto','installed') | list | length > 0
+
+- name: get information about version locks
+  command: yum versionlock list
+  changed_when: false
+  register: yum_lock
+  args:
+    warn: false
+  check_mode: false
+  when: curator.pin_version
+
+- name: show elasticsearch-curator version
+  debug:
+    msg: "{% if installed_package_version is defined %}Current: {{ installed_package_version }} {% endif %}Install: {{ curator.version }}"
+
+- name: remove version lock for elasticsearch-curator
+  command: yum versionlock delete elasticsearch-curator
+  args:
+    warn: false
+  when:
+    - curator.pin_version
+    - "'elasticsearch-curator' in yum_lock.stdout"
+    - installed_package_version is defined
+    - installed_package_version is version(curator.version, '<>')
+  notify: curator lock version
+
+- name: install elasticsearch-curator
+  yum:
+    name: elasticsearch-curator-{{ curator.version }}
+    update_cache: true
+    allow_downgrade: true
+  notify: curator lock version
+
+- name: lock curator version
+  debug:
+    msg: "Pin curator version"
+  changed_when: true
+  when:
+    - curator.pin_version
+    - "not 'elasticsearch-curator' in yum_lock.stdout"
+  notify: curator lock version

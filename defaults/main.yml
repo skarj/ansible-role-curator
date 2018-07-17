@@ -1,0 +1,56 @@
+---
+
+curator:
+
+  version: "5.5.4"
+
+  # Lock/hold curator version
+  pin_version: true
+
+  dirs:
+    config: "/etc/curator"
+    actions: "/etc/curator/actions"
+
+  # Options for curator.yml configuarion file
+  # The configuration file contains client connection and settings for logging
+  config:
+    # Remember, leave a key empty if there is no value. None will be a string,
+    # not a Python "NoneType"
+    client:
+      hosts:
+        - 127.0.0.1
+      port: 9200
+      url_prefix:
+      use_ssl: false
+      certificate:
+      client_cert:
+      client_key:
+      aws_key:
+      aws_secret_key:
+      aws_region:
+      ssl_no_validate: false
+      http_auth:
+      timeout: 30
+      master_only: false
+
+    logging:
+      loglevel: INFO
+      logfile: /var/log/curator/curator.log
+      logformat: default
+      blacklist: ['elasticsearch', 'urllib3']
+
+  # Actions are the tasks which Curator can perform on your indices
+  action_configs: []
+
+  # Generate index rotation tasks for project and env related filebeat indexes
+  project_index_rotation: []
+  #  - name: "project1"
+  #    keep_days:
+  #      # delete production indexes older than 10 days (default 14)
+  #      prod: 10
+  #      # delete preproduction indexes older than 5 days (default 7)
+  #      preprod: 5
+  #  - name: "project2"
+
+  # Cron jobs for schedulled tasks
+  cron_jobs: []

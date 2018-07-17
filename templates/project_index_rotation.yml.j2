@@ -1,0 +1,49 @@
+#jinja2: lstrip_blocks: "True"
+actions:
+{% set projects = curator.project_index_rotation %}
+{% set count = [0] %}
+{% for project in projects %}
+  {% set project_name = project.name %}
+  {% for env in ['prod', 'preprod'] %}
+  {% if count.append(count.pop() + 1) %}{% endif %}
+  {% if env == 'prod' %}
+    {% set envs = 'prod|stg' %}
+    {% if project.keep_days is defined %}
+      {% if project.keep_days.prod is defined %}
+        {% set keep_num = project.keep_days.prod %}
+      {% endif %}
+    {% else %}
+      {% set keep_num = 7 %}
+    {% endif %}
+  {% else %}
+    {% set envs = 'dev|qa' %}
+    {% if project.keep_days is defined %}
+      {% if project.keep_days.preprod is defined %}
+        {% set keep_num = project.keep_days.preprod %}
+      {% endif %}
+    {% else %}
+      {% set keep_num = 7 %}
+    {% endif %}
+  {% endif %}
+  {{ count[0] }}:
+    description: Delete {{ env }}uction indices older than {{ keep_num }} days for {{ project_name }} project
+    action: delete_indices
+    filters:
+      - exclude:
+        filtertype: pattern
+        kind: regex
+        value: '^filebeat-\d{1}.\d{1}.\d{1}-{{ project_name }}-({{ envs }})-\d{4}.\d{2}.\d{2}'
+      - direction: older
+        exclude:
+        filtertype: age
+        source: creation_date
+        timestring: '%Y.%m.%d'
+        unit: days
+        unit_count: {{ keep_num }}
+    options:
+      continue_if_exception: false
+      disable_action: false
+      ignore_empty_list: true
+      timeout_override:
+  {% endfor %}
+{% endfor %}

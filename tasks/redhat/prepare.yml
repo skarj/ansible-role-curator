@@ -1,0 +1,21 @@
+---
+
+- name: ensure yum-utils is installed
+  package:
+    name: yum-utils
+
+- name: ensure Curator repository is present
+  yum_repository:
+    name: "curator-{{ curator.version.split('.')[:1] | join('.') }}.x"
+    description: "Curator repository version {{ curator.version.split('.')[:1] | join('.') }}.x"
+    file: "curator"
+    baseurl: "http://packages.elastic.co/curator/{{ curator.version.split('.')[:1] | join('.') }}/centos/{{ ansible_distribution_major_version }}"
+    gpgkey: "http://packages.elastic.co/GPG-KEY-elasticsearch"
+    gpgcheck: true
+    sslverify: true
+    sslcacert: /etc/pki/tls/certs/ca-bundle.crt
+
+- name: ensure yum-plugin-versionlock is installed
+  package:
+    name: yum-plugin-versionlock
+  when: curator.pin_version

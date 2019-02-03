@@ -2,7 +2,7 @@
 
 curator:
 
-  version: "5.5.4"
+  version: "5.6.0"
 
   # Lock/hold curator version
   pin_version: true
